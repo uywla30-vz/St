@@ -1,0 +1,5 @@
+__pycache__/
+.env
+workspace/
+test_workspace/
+*.log

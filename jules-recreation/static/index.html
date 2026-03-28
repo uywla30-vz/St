@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Jules Recreation</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div id="sidebar">
+        <h2>Files</h2>
+        <div id="file-list"></div>
+    </div>
+    <div id="main">
+        <div id="header">
+            <h1>Jules</h1>
+            <div id="status">Ready</div>
+        </div>
+        <div id="code-viewer">
+            <pre><code id="file-content">Select a file to view</code></pre>
+        </div>
+        <div id="terminal-container">
+            <div id="terminal"></div>
+            <div id="input-area">
+                <input type="text" id="task-input" placeholder="What task should Jules perform?">
+                <button id="run-btn">Run Task</button>
+            </div>
+        </div>
+    </div>
+    <script src="/static/app.js"></script>
+</body>
+</html>
