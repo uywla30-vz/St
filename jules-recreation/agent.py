@@ -36,6 +36,7 @@ IMPORTANT:
 - ONLY ONE tool call per response is allowed. Do not include multiple ACTION: blocks.
 - PREFER `edit_file` over `write_file` for small changes to avoid overwriting or hardcoding existing logic.
 - AVOID hardcoding values; use parameters or environment-driven logic when possible.
+- You have a PERSISTENT memory. If the user asks for a follow-up or a correction, use your knowledge of previous actions.
 - When you are finished, state "FINAL_ANSWER: [summary of what you did]".
 
 Format tool calls like this:
@@ -44,6 +45,14 @@ ACTION:
 {{"tool": "tool_name", "parameters": {{"param1": "value1"}}}}
 ```
 """
+        self.messages = [
+            {"role": "system", "content": self.system_prompt}
+        ]
+
+    def reset_history(self):
+        self.messages = [
+            {"role": "system", "content": self.system_prompt}
+        ]
 
     def _safe_path(self, path: str) -> str:
         full_path = os.path.abspath(os.path.join(self.root_dir, path))
@@ -105,16 +114,18 @@ ACTION:
             return str(e)
 
     async def run_task(self, task: str, callback: Callable[[str, str], Any]):
-        messages = [
-            {"role": "system", "content": self.system_prompt},
-            {"role": "user", "content": task}
-        ]
+        self.messages.append({"role": "user", "content": task})
+
+        # Limit history to the last 20 messages (excluding system prompt)
+        # to keep the context window manageable.
+        if len(self.messages) > 21:
+            self.messages = [self.messages[0]] + self.messages[-20:]
 
         for _ in range(15):  # Max 15 steps
             response = ""
             try:
                 resp = await self.client.chat_completion(
-                    messages=messages,
+                    messages=self.messages,
                     max_tokens=2048
                 )
                 response = resp.choices[0].message.content
@@ -123,7 +134,7 @@ ACTION:
                 break
 
             await callback("thought", response)
-            messages.append({"role": "assistant", "content": response})
+            self.messages.append({"role": "assistant", "content": response})
 
             if "FINAL_ANSWER:" in response:
                 break
@@ -177,15 +188,15 @@ ACTION:
                         observation = f"Unknown tool: {tool_name}"
 
                     await callback("observation", observation)
-                    messages.append({"role": "user", "content": f"OBSERVATION: {observation}"})
+                    self.messages.append({"role": "user", "content": f"OBSERVATION: {observation}"})
                 except Exception as e:
                     error_msg = f"Error parsing/executing action: {str(e)}"
                     await callback("error", error_msg)
-                    messages.append({"role": "user", "content": error_msg})
+                    self.messages.append({"role": "user", "content": error_msg})
             else:
                 if "FINAL_ANSWER:" not in response:
                     prompt = "Please proceed with the next step or provide a FINAL_ANSWER."
-                    messages.append({"role": "user", "content": prompt})
+                    self.messages.append({"role": "user", "content": prompt})
 
 if __name__ == "__main__":
     # Simple CLI test
