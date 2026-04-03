@@ -49,6 +49,11 @@ async def read_file(path: str):
     except Exception as e:
         return {"error": str(e)}
 
+@app.post("/api/reset")
+async def reset_context():
+    agent.reset_history()
+    return {"status": "Context reset successfully"}
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()

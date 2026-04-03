@@ -7,6 +7,7 @@ const codeViewer = document.getElementById('file-content');
 const status = document.getElementById('status');
 const toggleSidebarBtn = document.getElementById('toggle-sidebar');
 const sidebar = document.getElementById('sidebar');
+const resetBtn = document.getElementById('reset-btn');
 
 toggleSidebarBtn.addEventListener('click', () => {
     if (sidebar.style.display === 'none') {
@@ -14,6 +15,16 @@ toggleSidebarBtn.addEventListener('click', () => {
     } else {
         sidebar.style.display = 'none';
     }
+});
+
+resetBtn.addEventListener('click', async () => {
+    const response = await fetch('/api/reset', { method: 'POST' });
+    const data = await response.json();
+    const div = document.createElement('div');
+    div.classList.add('info');
+    div.innerText = `[INFO] ${data.status}`;
+    terminal.appendChild(div);
+    terminal.scrollTop = terminal.scrollHeight;
 });
 
 ws.onmessage = (event) => {

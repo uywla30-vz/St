@@ -30,12 +30,13 @@ body {
 }
 
 #code-viewer {
-    flex-grow: 1;
+    flex: 1 1 50%;
     background-color: #ffffff;
     padding: 20px;
     overflow-y: auto;
     border-bottom: 1px solid #ddd;
     font-family: 'Courier New', Courier, monospace;
+    min-height: 100px;
 }
 
 #terminal-container {
