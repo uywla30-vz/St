@@ -36,7 +36,10 @@ IMPORTANT:
 - When you are finished, state "FINAL_ANSWER: [summary of what you did]".
 
 Format tool calls like this:
-ACTION: {{"tool": "tool_name", "parameters": {{"param1": "value1"}}}}
+ACTION:
+```json
+{{"tool": "tool_name", "parameters": {{"param1": "value1"}}}}
+```
 """
 
     def _safe_path(self, path: str) -> str:
@@ -108,30 +111,37 @@ ACTION: {{"tool": "tool_name", "parameters": {{"param1": "value1"}}}}
             if "FINAL_ANSWER:" in response:
                 break
 
-            # Parse Action using a balanced brace approach
+            # Parse Action using a markdown block priority approach
             if "ACTION:" in response:
                 try:
                     action_start = response.find("ACTION:") + 7
                     json_text = response[action_start:].strip()
 
-                    # Find balanced braces
-                    brace_count = 0
-                    first_brace = -1
-                    last_brace = -1
-                    for i, char in enumerate(json_text):
-                        if char == '{':
-                            if brace_count == 0:
-                                first_brace = i
-                            brace_count += 1
-                        elif char == '}':
-                            brace_count -= 1
-                            if brace_count == 0:
-                                last_brace = i
-                                break
+                    # Try to find JSON inside a markdown code block first
+                    code_block_match = re.search(r'```json\s*(.*?)\s*```', json_text, re.DOTALL)
+                    if code_block_match:
+                        action_json = code_block_match.group(1).strip()
+                    else:
+                        # Fallback: Find balanced braces
+                        brace_count = 0
+                        first_brace = -1
+                        last_brace = -1
+                        for i, char in enumerate(json_text):
+                            if char == '{':
+                                if brace_count == 0:
+                                    first_brace = i
+                                brace_count += 1
+                            elif char == '}':
+                                brace_count -= 1
+                                if brace_count == 0:
+                                    last_brace = i
+                                    break
+                        if first_brace != -1 and last_brace != -1:
+                            action_json = json_text[first_brace:last_brace+1]
+                        else:
+                            raise ValueError("Could not find valid JSON in action block")
 
-                    if first_brace != -1 and last_brace != -1:
-                        action_json = json_text[first_brace:last_brace+1]
-                        action = json.loads(action_json)
+                    action = json.loads(action_json)
                     tool_name = action["tool"]
                     params = action.get("parameters", {})
 
