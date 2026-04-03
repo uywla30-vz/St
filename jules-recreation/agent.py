@@ -27,12 +27,15 @@ Available Tools:
 - `list_files(path=".")`: Lists files in a directory.
 - `read_file(filepath)`: Reads the content of a file.
 - `write_file(filepath, content)`: Creates or overwrites a file.
+- `edit_file(filepath, search, replace)`: Edits specific code in a file by replacing `search` string with `replace` string.
 - `execute_command(command)`: Runs a shell command.
 
 IMPORTANT:
 - Stay within {self.root_dir}. Do not attempt to access or modify files outside this directory.
 - Use valid JSON for tool calls.
 - ONLY ONE tool call per response is allowed. Do not include multiple ACTION: blocks.
+- PREFER `edit_file` over `write_file` for small changes to avoid overwriting or hardcoding existing logic.
+- AVOID hardcoding values; use parameters or environment-driven logic when possible.
 - When you are finished, state "FINAL_ANSWER: [summary of what you did]".
 
 Format tool calls like this:
@@ -71,6 +74,20 @@ ACTION:
             with open(safe_path, "w") as f:
                 f.write(content)
             return f"Successfully wrote to {filepath}"
+        except Exception as e:
+            return str(e)
+
+    def edit_file(self, filepath: str, search: str, replace: str) -> str:
+        safe_path = self._safe_path(filepath)
+        try:
+            with open(safe_path, "r") as f:
+                content = f.read()
+            if search not in content:
+                return f"Error: Search string not found in {filepath}"
+            new_content = content.replace(search, replace)
+            with open(safe_path, "w") as f:
+                f.write(new_content)
+            return f"Successfully edited {filepath}"
         except Exception as e:
             return str(e)
 
@@ -152,6 +169,8 @@ ACTION:
                         observation = self.read_file(**params)
                     elif tool_name == "write_file":
                         observation = self.write_file(**params)
+                    elif tool_name == "edit_file":
+                        observation = self.edit_file(**params)
                     elif tool_name == "execute_command":
                         observation = await self.execute_command(**params)
                     else:

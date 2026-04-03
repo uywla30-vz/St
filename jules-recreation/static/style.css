@@ -39,19 +39,23 @@ body {
 }
 
 #terminal-container {
-    height: 300px;
+    height: 40%;
+    min-height: 200px;
     background-color: #1e1e1e;
     color: #00ff00;
     display: flex;
     flex-direction: column;
+    resize: vertical;
+    overflow: auto;
 }
 
 #terminal {
     flex-grow: 1;
-    padding: 10px;
+    padding: 15px;
     overflow-y: auto;
-    font-family: 'Courier New', Courier, monospace;
+    font-family: 'Fira Code', 'Courier New', Courier, monospace;
     font-size: 14px;
+    line-height: 1.4;
 }
 
 #input-area {

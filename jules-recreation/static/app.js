@@ -5,6 +5,16 @@ const runBtn = document.getElementById('run-btn');
 const fileList = document.getElementById('file-list');
 const codeViewer = document.getElementById('file-content');
 const status = document.getElementById('status');
+const toggleSidebarBtn = document.getElementById('toggle-sidebar');
+const sidebar = document.getElementById('sidebar');
+
+toggleSidebarBtn.addEventListener('click', () => {
+    if (sidebar.style.display === 'none') {
+        sidebar.style.display = 'block';
+    } else {
+        sidebar.style.display = 'none';
+    }
+});
 
 ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
