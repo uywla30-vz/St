@@ -32,6 +32,7 @@ Available Tools:
 IMPORTANT:
 - Stay within {self.root_dir}. Do not attempt to access or modify files outside this directory.
 - Use valid JSON for tool calls.
+- ONLY ONE tool call per response is allowed. Do not include multiple ACTION: blocks.
 - When you are finished, state "FINAL_ANSWER: [summary of what you did]".
 
 Format tool calls like this:
@@ -107,12 +108,30 @@ ACTION: {{"tool": "tool_name", "parameters": {{"param1": "value1"}}}}
             if "FINAL_ANSWER:" in response:
                 break
 
-            # Parse Action using Regex for more robustness
-            action_match = re.search(r'ACTION:\s*({.*})', response, re.DOTALL)
-            if action_match:
+            # Parse Action using a balanced brace approach
+            if "ACTION:" in response:
                 try:
-                    action_json = action_match.group(1)
-                    action = json.loads(action_json)
+                    action_start = response.find("ACTION:") + 7
+                    json_text = response[action_start:].strip()
+
+                    # Find balanced braces
+                    brace_count = 0
+                    first_brace = -1
+                    last_brace = -1
+                    for i, char in enumerate(json_text):
+                        if char == '{':
+                            if brace_count == 0:
+                                first_brace = i
+                            brace_count += 1
+                        elif char == '}':
+                            brace_count -= 1
+                            if brace_count == 0:
+                                last_brace = i
+                                break
+
+                    if first_brace != -1 and last_brace != -1:
+                        action_json = json_text[first_brace:last_brace+1]
+                        action = json.loads(action_json)
                     tool_name = action["tool"]
                     params = action.get("parameters", {})
 
